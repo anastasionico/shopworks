@@ -1,0 +1,44 @@
+version: '3.9'
+
+networks:
+  shopworks:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx-service
+    ports:
+      - "8088:80"
+    volumes:
+      - .:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/log/error.log:/var/log/nginx/error.log
+      - ./nginx/log/access.log:/var/log/nginx/access.log
+    depends_on:
+      - php
+      - sqlite3
+    networks:
+      - shopworks
+
+  sqlite3:
+    container_name: sqlite3_container
+    image: nouchka/sqlite3:latest
+    stdin_open: true
+    tty: true
+    volumes:
+     - ./database/:/root/db/
+    restart: unless-stopped
+    networks:
+        - shopworks
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php-service
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "9012:9000"
+    networks:
+      - shopworks
